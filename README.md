@@ -1,10 +1,20 @@
-# github-projects
+# GitHub Projects Skill
 
-GitHub Projects v2 skill for OpenCode.
+> GitHub Projects v2 workflow for OpenCode, powered by `gh` + GraphQL.
 
-This skill uses the GitHub CLI and GraphQL to inspect and update GitHub Projects items, fields, and metadata.
+Use this skill to inspect, organize, and update GitHub Projects items without leaving the terminal workflow.
 
-## What it covers
+## At a Glance
+
+| Area | What it does |
+| --- | --- |
+| Project visibility | Lists projects for users and organizations |
+| Item inspection | Shows items, field values, and browser links |
+| Item management | Adds issues and PRs, creates draft items, updates fields |
+| Project updates | Changes metadata like title, visibility, README, and description |
+| Grooming | Expands lightweight cards into actionable work items |
+
+## Capabilities
 
 - List projects for a user or organization
 - Show project items and field values
@@ -17,8 +27,10 @@ This skill uses the GitHub CLI and GraphQL to inspect and update GitHub Projects
 
 ## Requirements
 
+Before using the skill:
+
 - `gh` must be authenticated
-- Token scope should include `project` for mutations
+- token scope should include `project` for mutations
 - `read:project` is enough for read-only requests
 
 Check auth with:
@@ -27,9 +39,9 @@ Check auth with:
 gh auth status
 ```
 
-## Main behavior
+## Default Workflow
 
-The skill follows a small, safe workflow:
+The skill follows a small, safe mutation flow:
 
 1. Resolve the target owner and project.
 2. Resolve item IDs, field IDs, and content IDs as needed.
@@ -37,16 +49,19 @@ The skill follows a small, safe workflow:
 4. Apply the smallest correct mutation.
 5. Re-query and report the final state.
 
-## Item links
+## Item Output Rules
 
-When listing or showing items, the skill should include a browser-openable link for each item.
+When listing or showing items, the response should always include a browser-openable link.
 
-- For issues and pull requests, use the GitHub `url`.
-- For draft issues, report when no direct browser link is available.
+| Item type | Link behavior |
+| --- | --- |
+| Issue | Use the GitHub `url` |
+| Pull request | Use the GitHub `url` |
+| Draft issue | State clearly when no direct browser link exists |
 
-## Grooming workflow
+## Grooming Workflow
 
-The skill supports grooming requests triggered by words such as:
+The grooming flow should activate for requests like:
 
 - `groom`
 - `improve`
@@ -58,27 +73,33 @@ The skill supports grooming requests triggered by words such as:
 - `make this more actionable`
 - `break this down`
 
-When grooming is requested, the skill must first ask which path to use:
+### First Decision
 
-1. `plan mode`
-2. `improve from current description`
+When grooming is requested, ask the user to choose one path first:
 
-### Improve from current description
+1. `Plan mode`
+2. `Improve from current description`
 
-Use the existing body or description as source material and rewrite it into a clearer, more actionable version.
+### Path A: Improve From Current Description
 
-### Plan mode
+Use the existing body or description as the source material and rewrite it into a clearer, more actionable version.
 
-Ask short, targeted questions first, then rewrite the item using this Good Card Anatomy:
+### Path B: Plan Mode
 
-- `Title`
-- `Context` (optional but powerful)
-- `User Story`
-- `Acceptance Criteria`
-- `Technical Notes` (optional)
-- `Dependencies`
+Ask short, targeted questions first, then rewrite the item using the required card structure.
 
-Preferred planning questions:
+#### Good Card Anatomy
+
+| Section | Notes |
+| --- | --- |
+| `Title` | Clear and specific |
+| `Context` | Optional, but strongly encouraged |
+| `User Story` | Who, what, and why |
+| `Acceptance Criteria` | Observable success conditions |
+| `Technical Notes` | Optional implementation guidance |
+| `Dependencies` | Related items, APIs, teams, or blockers |
+
+#### Preferred Plan-Mode Questions
 
 - Who is the user or actor?
 - What problem are we solving?
@@ -88,24 +109,37 @@ Preferred planning questions:
 - Are there technical constraints or implementation expectations?
 - Does this depend on another item, service, API, team, or design?
 
-## Files
+## Example Requests
 
-- `SKILL.md`: main instructions and workflow rules
-- `references/graphql-recipes.md`: reusable GraphQL query and mutation examples
+```text
+list all items from project Buteco Games
+show item #6 from Buteco Games
+move item #6 in Buteco Games to In Progress
+add Funnie-Tech/butecogames#12 to Buteco Games
+create a draft item in Buteco Games called Improve onboarding flow
+improve item #6 in Buteco Games
+```
 
-## Example requests
+## Example Grooming Flow
 
-- `list all items from project Buteco Games`
-- `show item #6 from Buteco Games`
-- `move item #6 in Buteco Games to In Progress`
-- `add Funnie-Tech/butecogames#12 to Buteco Games`
-- `create a draft item in Buteco Games called Improve onboarding flow`
-- `improve item #6 in Buteco Games`
+```text
+User: improve item #6 in Buteco Games
+Skill: Plan mode or improve from current description?
+User: Plan mode
+Skill: asks targeted questions
+Skill: rewrites the item using Good Card Anatomy
+Skill: updates the item and returns the browser link
+```
 
-Example grooming flow:
+## Repository Files
 
-1. User: `improve item #6 in Buteco Games`
-2. Skill: asks whether to use `plan mode` or `improve from current description`
-3. If `plan mode` is selected, the skill asks targeted questions
-4. The skill rewrites the card using Good Card Anatomy
-5. The skill updates the item and returns the browser link
+| File | Purpose |
+| --- | --- |
+| `SKILL.md` | Main instructions and workflow rules |
+| `references/graphql-recipes.md` | Reusable GraphQL query and mutation examples |
+
+## Notes
+
+> Prefer the smallest correct mutation.
+>
+> Query before mutating, and re-query after mutating.
